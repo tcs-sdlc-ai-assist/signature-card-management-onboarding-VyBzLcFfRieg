@@ -24,6 +24,7 @@ import React from 'react';
 import { createBrowserRouter, Navigate, useNavigate } from 'react-router-dom';
 import { WelcomePage } from './pages/WelcomePage.jsx';
 import { LoginPage } from './pages/LoginPage.jsx';
+import { SignupPage } from './pages/SignupPage.jsx';
 import { VerificationPage } from './pages/VerificationPage.jsx';
 import { TokenValidationPage } from './pages/TokenValidationPage.jsx';
 import { AccountSelectionPage } from './pages/AccountSelectionPage.jsx';
@@ -32,6 +33,7 @@ import { ConfirmChangesPage } from './pages/ConfirmChangesPage.jsx';
 import { ReviewPage } from './pages/ReviewPage.jsx';
 import { SubmissionPage } from './pages/SubmissionPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
+import { SKIP_IDENTITY_AND_TOKEN_STEPS } from './constants/constants.js';
 
 /**
  * Welcome page wrapper with navigation callbacks.
@@ -43,7 +45,7 @@ function WelcomeRoute() {
 
   return (
     <WelcomePage
-      onGetStarted={() => navigate('/login')}
+      onGetStarted={() => navigate('/signup')}
     />
   );
 }
@@ -58,7 +60,24 @@ function LoginRoute() {
 
   return (
     <LoginPage
-      onLoginSuccess={() => navigate('/verify')}
+      onLoginSuccess={() => navigate(SKIP_IDENTITY_AND_TOKEN_STEPS ? '/accounts' : '/verify')}
+      onSignUpNavigate={() => navigate('/signup')}
+    />
+  );
+}
+
+/**
+ * Signup page wrapper with navigation callbacks.
+ *
+ * @returns {React.ReactElement}
+ */
+function SignupRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <SignupPage
+      onSignupSuccess={() => navigate('/login')}
+      onLoginNavigate={() => navigate('/login')}
     />
   );
 }
@@ -69,6 +88,10 @@ function LoginRoute() {
  * @returns {React.ReactElement}
  */
 function VerificationRoute() {
+  if (SKIP_IDENTITY_AND_TOKEN_STEPS) {
+    return <Navigate to="/accounts" replace />;
+  }
+
   const navigate = useNavigate();
 
   return (
@@ -85,6 +108,10 @@ function VerificationRoute() {
  * @returns {React.ReactElement}
  */
 function TokenValidationRoute() {
+  if (SKIP_IDENTITY_AND_TOKEN_STEPS) {
+    return <Navigate to="/accounts" replace />;
+  }
+
   const navigate = useNavigate();
 
   return (
@@ -224,6 +251,10 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginRoute />,
+  },
+  {
+    path: '/signup',
+    element: <SignupRoute />,
   },
   {
     path: '/verify',

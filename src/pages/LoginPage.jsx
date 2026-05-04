@@ -70,6 +70,7 @@ function ShieldIcon() {
  */
 export function LoginPage({
   onLoginSuccess = null,
+  onSignUpNavigate = null,
   sessionExpired = false,
   className = '',
 }) {
@@ -174,6 +175,31 @@ export function LoginPage({
         {/* Footer help text */}
         <p
           style={{
+            fontSize: 'var(--hb-font-size-sm)',
+            marginTop: 'var(--hb-space-md)',
+            marginBottom: 0,
+          }}
+        >
+          Need an account?{' '}
+          <button
+            type="button"
+            onClick={onSignUpNavigate}
+            style={{
+              border: 'none',
+              background: 'none',
+              color: 'var(--hb-primary-blue)',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: 0,
+            }}
+          >
+            Sign Up
+          </button>
+        </p>
+
+        {/* Footer help text */}
+        <p
+          style={{
             fontSize: 'var(--hb-font-size-xs)',
             color: 'var(--hb-secondary-gray)',
             textAlign: 'center',
@@ -202,6 +228,7 @@ export function LoginPage({
 
 LoginPage.propTypes = {
   onLoginSuccess: PropTypes.func,
+  onSignUpNavigate: PropTypes.func,
   sessionExpired: PropTypes.bool,
   className: PropTypes.string,
 };

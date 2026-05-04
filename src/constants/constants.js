@@ -67,6 +67,7 @@ export const STORAGE_KEYS = {
   AUTH_TOKEN: 'sig_auth_token',
   REFRESH_TOKEN: 'sig_refresh_token',
   USER: 'sig_user',
+  REGISTERED_USERS: 'sig_registered_users',
   SESSION_EXPIRY: 'sig_session_expiry',
   LOGIN_ATTEMPTS: 'sig_login_attempts',
   LOCKOUT_UNTIL: 'sig_lockout_until',
@@ -131,3 +132,6 @@ export const SEARCH_DEBOUNCE_MS = 300;
 
 /** Number of items per page for paginated lists */
 export const DEFAULT_PAGE_SIZE = 10;
+
+/** Temporary local-mock bypass for verification and token validation steps */
+export const SKIP_IDENTITY_AND_TOKEN_STEPS = true;

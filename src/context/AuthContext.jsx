@@ -18,6 +18,7 @@ import React, { createContext, useState, useCallback, useEffect, useContext, use
 import PropTypes from 'prop-types';
 import {
   login as authLogin,
+  signup as authSignup,
   logout as authLogout,
   getSession,
   isAuthenticated as checkIsAuthenticated,
@@ -37,6 +38,7 @@ import {
 import { useSessionTimeout } from '../hooks/useSessionTimeout.js';
 import { logEvent, AUDIT_EVENT_TYPES } from '../services/auditLogger.js';
 import { LOGIN_MESSAGES } from '../constants/messages.js';
+import { SKIP_IDENTITY_AND_TOKEN_STEPS } from '../constants/constants.js';
 
 /**
  * @type {React.Context}
@@ -108,6 +110,12 @@ export function AuthProvider({ children }) {
         setUser(session.user);
         setIsAuthenticated(true);
 
+        if (SKIP_IDENTITY_AND_TOKEN_STEPS) {
+          setIsVerified(true);
+          setIsTokenValid(true);
+          return;
+        }
+
         // Restore verification status
         const verificationStatus = getVerificationStatus();
         if (verificationStatus.isVerified && verificationStatus.userId === session.user.id) {
@@ -149,8 +157,8 @@ export function AuthProvider({ children }) {
       if (result.status === 'success') {
         setUser(result.user);
         setIsAuthenticated(true);
-        setIsVerified(false);
-        setIsTokenValid(false);
+        setIsVerified(SKIP_IDENTITY_AND_TOKEN_STEPS);
+        setIsTokenValid(SKIP_IDENTITY_AND_TOKEN_STEPS);
         setError(null);
 
         // Reset verification and token state for new session
@@ -181,6 +189,42 @@ export function AuthProvider({ children }) {
       };
     } catch {
       const message = LOGIN_MESSAGES.INVALID_CREDENTIALS;
+      setError(message);
+      setLoading(false);
+      return {
+        status: 'error',
+        message,
+      };
+    }
+  }, []);
+
+  /**
+   * Creates a mock frontend user account.
+   *
+   * @param {{
+   *   firstName: string,
+   *   lastName: string,
+   *   email: string,
+   *   username: string,
+   *   password: string
+   * }} payload - Registration data.
+   * @returns {{ status: 'success'|'error', message?: string, user?: Object }} Signup result.
+   */
+  const signup = useCallback((payload) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = authSignup(payload);
+      if (result.status === 'success') {
+        setError(null);
+      } else {
+        setError(result.message || 'Unable to create account.');
+      }
+      setLoading(false);
+      return result;
+    } catch {
+      const message = 'Unable to create account.';
       setError(message);
       setLoading(false);
       return {
@@ -235,6 +279,15 @@ export function AuthProvider({ children }) {
    * }} The verification result.
    */
   const verifyIdentity = useCallback((params = {}) => {
+    if (SKIP_IDENTITY_AND_TOKEN_STEPS) {
+      setIsVerified(true);
+      return {
+        status: 'success',
+        verified: true,
+        message: 'Identity verification skipped in mock mode.',
+      };
+    }
+
     const { method, otp, kbaAnswers } = params;
 
     if (!user || !isAuthenticated) {
@@ -301,6 +354,15 @@ export function AuthProvider({ children }) {
    * }} The validation result.
    */
   const validateToken = useCallback((token) => {
+    if (SKIP_IDENTITY_AND_TOKEN_STEPS) {
+      setIsTokenValid(true);
+      return {
+        status: 'success',
+        tokenStatus: TOKEN_STATUSES.CONFIRMED,
+        message: 'Token validation skipped in mock mode.',
+      };
+    }
+
     if (!user || !isAuthenticated) {
       return {
         status: 'error',
@@ -364,6 +426,7 @@ export function AuthProvider({ children }) {
     loading,
     error,
     login,
+    signup,
     logout,
     verifyIdentity,
     validateToken,
@@ -382,6 +445,7 @@ export function AuthProvider({ children }) {
     loading,
     error,
     login,
+    signup,
     logout,
     verifyIdentity,
     validateToken,

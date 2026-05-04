@@ -129,6 +129,57 @@ function buildSession(userProfile) {
   };
 }
 
+/**
+ * Reads all mock registered users from localStorage.
+ *
+ * @returns {Array<Object>} Registered users list.
+ */
+function readRegisteredUsers() {
+  const users = getItem(STORAGE_KEYS.REGISTERED_USERS, []);
+  return Array.isArray(users) ? users : [];
+}
+
+/**
+ * Writes the mock registered users list to localStorage.
+ *
+ * @param {Array<Object>} users - Users to persist.
+ */
+function writeRegisteredUsers(users) {
+  setItem(STORAGE_KEYS.REGISTERED_USERS, users);
+}
+
+/**
+ * Returns a user profile when username/password pair matches mock records.
+ *
+ * @param {string} username - Trimmed username.
+ * @param {string} password - Raw password.
+ * @returns {Object|null} Matching user profile, or null.
+ */
+function getValidUserProfile(username, password) {
+  const registeredUsers = readRegisteredUsers();
+  const matchedUser = registeredUsers.find(
+    (candidate) => candidate.username === username && candidate.password === password
+  );
+
+  if (matchedUser) {
+    return {
+      id: matchedUser.id,
+      username: matchedUser.username,
+      firstName: matchedUser.firstName,
+      lastName: matchedUser.lastName,
+      email: matchedUser.email,
+      role: matchedUser.role || 'controlling_party',
+      phone: matchedUser.phone || '',
+      lastLogin: matchedUser.lastLogin || new Date().toISOString(),
+    };
+  }
+
+  const defaultCredentialsValid =
+    username === MOCK_USER_CREDENTIALS.username &&
+    password === MOCK_USER_CREDENTIALS.password;
+  return defaultCredentialsValid ? MOCK_USER_PROFILE : null;
+}
+
 // ---- Public API ----
 
 /**
@@ -179,16 +230,14 @@ export function login(username, password) {
   const trimmedUsername = username.trim();
   const trimmedPassword = password;
 
-  // Validate credentials against mock data
-  const credentialsValid =
-    trimmedUsername === MOCK_USER_CREDENTIALS.username &&
-    trimmedPassword === MOCK_USER_CREDENTIALS.password;
+  // Validate credentials against mock data + frontend registered users
+  const userProfile = getValidUserProfile(trimmedUsername, trimmedPassword);
 
-  if (credentialsValid) {
+  if (userProfile) {
     // Successful login — clear any failed attempt counters
     clearLockoutState();
 
-    const session = buildSession(MOCK_USER_PROFILE);
+    const session = buildSession(userProfile);
 
     // Persist session with TTL
     setWithExpiry(STORAGE_KEYS.AUTH_TOKEN, session.sessionToken, SESSION_TIMEOUT_MS);
@@ -268,6 +317,103 @@ export function login(username, password) {
     errorCode: 'INVALID_CREDENTIALS',
     message,
     remainingAttempts: remaining,
+  };
+}
+
+/**
+ * Registers a new mock frontend user.
+ *
+ * @param {{
+ *   firstName: string,
+ *   lastName: string,
+ *   email: string,
+ *   username: string,
+ *   password: string
+ * }} payload - Registration details.
+ * @returns {{
+ *   status: 'success'|'error',
+ *   user?: Object,
+ *   message?: string,
+ *   errorCode?: string
+ * }} Registration result.
+ */
+export function signup(payload = {}) {
+  const firstName = typeof payload.firstName === 'string' ? payload.firstName.trim() : '';
+  const lastName = typeof payload.lastName === 'string' ? payload.lastName.trim() : '';
+  const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+  const username = typeof payload.username === 'string' ? payload.username.trim() : '';
+  const password = typeof payload.password === 'string' ? payload.password : '';
+
+  if (!firstName || !lastName || !email || !username || !password) {
+    return {
+      status: 'error',
+      errorCode: 'VALIDATION_ERROR',
+      message: 'Please complete all required sign up fields.',
+    };
+  }
+
+  const registeredUsers = readRegisteredUsers();
+  const existingUserIndex = registeredUsers.findIndex(
+    (candidate) => candidate.username.toLowerCase() === username.toLowerCase()
+  );
+
+  if (existingUserIndex >= 0) {
+    const updatedUser = {
+      ...registeredUsers[existingUserIndex],
+      firstName,
+      lastName,
+      email,
+      password,
+      lastLogin: new Date().toISOString(),
+    };
+    const nextUsers = [...registeredUsers];
+    nextUsers[existingUserIndex] = updatedUser;
+    writeRegisteredUsers(nextUsers);
+
+    return {
+      status: 'success',
+      user: {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        phone: updatedUser.phone,
+        lastLogin: updatedUser.lastLogin,
+      },
+      message: 'Account already existed, so it was updated. Please log in.',
+    };
+  }
+
+  const newUser = {
+    id: `usr-${generateTokenId()}`,
+    username,
+    password,
+    firstName,
+    lastName,
+    email,
+    role: 'controlling_party',
+    phone: '',
+    createdAt: new Date().toISOString(),
+    lastLogin: new Date().toISOString(),
+  };
+
+  writeRegisteredUsers([...registeredUsers, newUser]);
+
+  return {
+    status: 'success',
+    user: {
+      id: newUser.id,
+      username: newUser.username,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      email: newUser.email,
+      role: newUser.role,
+      phone: newUser.phone,
+      lastLogin: newUser.lastLogin,
+    },
+    message: 'Account created successfully. Please log in.',
   };
 }
 
