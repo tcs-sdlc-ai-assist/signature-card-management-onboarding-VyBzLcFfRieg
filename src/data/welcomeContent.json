@@ -1,0 +1,45 @@
+{
+  "title": "Welcome to SIG Card Management",
+  "subtitle": "Your secure portal for managing business debit cards",
+  "bodyParagraphs": [
+    "SIG Card Management provides controlling parties with a streamlined, secure interface to manage authorized signer debit cards across all your business banking accounts.",
+    "From activating new cards to resending PINs, every action is tracked and verified to ensure the highest level of security for your organization."
+  ],
+  "featureHighlights": [
+    {
+      "icon": "search",
+      "title": "Search & Select",
+      "description": "Quickly find authorized signers and their associated cards across all linked business accounts."
+    },
+    {
+      "icon": "lock",
+      "title": "Lock & Unlock Cards",
+      "description": "Instantly lock a compromised card or unlock one that was previously restricted — with built-in daily attempt limits for added security."
+    },
+    {
+      "icon": "activate",
+      "title": "Activate New Cards",
+      "description": "Activate newly issued debit cards for authorized signers with identity verification at every step."
+    },
+    {
+      "icon": "replace",
+      "title": "Replace Cards",
+      "description": "Initiate card replacements for lost, stolen, or damaged cards. The old card is automatically deactivated."
+    },
+    {
+      "icon": "pin",
+      "title": "Resend PINs",
+      "description": "Request a new PIN to be mailed to the cardholder's registered address when the original is lost or forgotten."
+    },
+    {
+      "icon": "shield",
+      "title": "Secure & Audited",
+      "description": "All actions require identity verification and are logged for compliance. Session timeouts and attempt limits protect against unauthorized use."
+    }
+  ],
+  "ctaButton": {
+    "text": "Get Started",
+    "ariaLabel": "Get started with card management"
+  },
+  "footerNote": "Need help? Contact your system administrator or refer to the card management policy documentation."
+}
